@@ -380,6 +380,7 @@ public:
     bool ruledebug;
     bool propsFetched;
     bool needCommit;
+    static uint last_epoch;
 
     SvnRevision(int revision, svn_fs_t *f, apr_pool_t *parent_pool)
         : pool(parent_pool), fs(f), fs_root(0), revnum(revision), propsFetched(false)
@@ -412,6 +413,7 @@ private:
     void splitPathName(const Rules::Match &rule, const QString &pathName, QString *svnprefix_p,
                        QString *repository_p, QString *effectiveRepository_p, QString *branch_p, QString *path_p);
 };
+uint SvnRevision::last_epoch = 0;
 
 int SvnPrivate::exportRevision(int revnum)
 {
@@ -543,7 +545,7 @@ int SvnRevision::fetchRevProps()
     else
         log.clear();
     authorident = svnauthor ? identities.value(svnauthor->data) : QByteArray();
-    epoch = svndate ? get_epoch(svndate->data) : 0;
+    epoch = svndate ? get_epoch(svndate->data) : last_epoch;
     if (authorident.isEmpty()) {
         if (!svnauthor || svn_string_isempty(svnauthor))
             authorident = "nobody <nobody@localhost>";
@@ -552,6 +554,7 @@ int SvnRevision::fetchRevProps()
                 QByteArray("@") + userdomain.toUtf8() + QByteArray(">");
     }
     propsFetched = true;
+    last_epoch = epoch;
     return EXIT_SUCCESS;
 }
 
