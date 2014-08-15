@@ -744,6 +744,7 @@ void FastImportRepository::startFastImport()
         marksOptions << "--import-marks=" + marksFile;
         marksOptions << "--export-marks=" + marksFile;
         marksOptions << "--force";
+        marksOptions << "--active-branches=40";
 
         fastImport.setStandardOutputFile(logFileName(name), QIODevice::Append);
         fastImport.setProcessChannelMode(QProcess::MergedChannels);
