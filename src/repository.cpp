@@ -734,6 +734,7 @@ void FastImportRepository::startFastImport()
             fastImport.start("git", QStringList() << "fast-import" << marksOptions);
         } else {
             fastImport.start("/bin/cat", QStringList());
+            //fastImport.start("socat", QStringList() << "-u" << "-" << "CREATE:dry-run.fi");
         }
         fastImport.waitForStarted(-1);
 
