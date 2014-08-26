@@ -280,6 +280,8 @@ static int dumpBlob(Repository::Transaction *txn, svn_fs_root_t *fs_root,
 
     SVN_ERR(svn_fs_file_length(&stream_length, fs_root, pathname, dumppool));
 
+    //qDebug() << "dumpBlob: " << pathname << "finalPathName " << finalPathName;
+
     svn_stream_t *in_stream, *out_stream;
     if (!CommandLineParser::instance()->contains("dry-run")) {
         // open the file
@@ -358,7 +360,7 @@ static int recursiveDumpDir(Repository::Transaction *txn, svn_fs_root_t *fs_root
         } else if (i.value() == svn_node_file) {
             // RMC to chatty
             //printf("+");
-            fflush(stdout);
+            //fflush(stdout);
             if (dumpBlob(txn, fs_root, entryName, entryFinalName, dirpool) == EXIT_FAILURE)
                 return EXIT_FAILURE;
         }
@@ -450,9 +452,14 @@ int SvnPrivate::exportRevision(int revnum)
     rev.repositories = repositories;
     rev.identities = identities;
     rev.userdomain = userdomain;
+    //time_t t0, t1;
+    time_t t = time(NULL);
+    struct tm * p = localtime(&t);
+    char s[64];
 
+    strftime(s, 64, "%r", p);
     // open this revision:
-    printf("Exporting revision %d ", revnum);
+    printf("[%s] Exporting revision %d\t", s, revnum);
     fflush(stdout);
 
     if (rev.open() == EXIT_FAILURE)
@@ -460,6 +467,7 @@ int SvnPrivate::exportRevision(int revnum)
 
     if (rev.prepareTransactions() == EXIT_FAILURE)
         return EXIT_FAILURE;
+
 
     if (!rev.needCommit) {
         printf(" nothing to do\n");
@@ -650,8 +658,11 @@ int SvnRevision::exportDispatch(const char *key, const svn_fs_path_change_t *cha
                                 apr_hash_t *changes, const QString &current,
                                 const Rules::Match &rule, const MatchRuleList &matchRules, apr_pool_t *pool)
 {
+    //time_t t0,t1;
+    int ret;
     //if(ruledebug)
     //  qDebug() << "rev" << revnum << qPrintable(current) << "matched rule:" << rule.lineNumber << "(" << rule.rx.pattern() << ")";
+   //t0 = time(NULL);
     switch (rule.action) {
     case Rules::Match::Ignore:
         //if(ruledebug)
@@ -661,26 +672,34 @@ int SvnRevision::exportDispatch(const char *key, const svn_fs_path_change_t *cha
     case Rules::Match::Recurse:
         if(ruledebug)
             qDebug() << "rev" << revnum << qPrintable(current) << "matched rule:" << rule.info() << "  " << "recursing.";
-        return recurse(key, change, path_from, matchRules, rev_from, changes, pool);
+        ret = recurse(key, change, path_from, matchRules, rev_from, changes, pool);
+        goto out;
 
     case Rules::Match::Export:
         if(ruledebug)
             qDebug() << "rev" << revnum << qPrintable(current) << "matched rule:" << rule.info() << "  " << "exporting.";
-        if (exportInternal(key, change, path_from, rev_from, current, rule, matchRules) == EXIT_SUCCESS)
-            return EXIT_SUCCESS;
+        if (exportInternal(key, change, path_from, rev_from, current, rule, matchRules) == EXIT_SUCCESS) {
+            ret = EXIT_SUCCESS;
+	    goto out;
+	}
         if (change->change_kind != svn_fs_path_change_delete) {
             if(ruledebug)
                 qDebug() << "rev" << revnum << qPrintable(current) << "matched rule:" << rule.info() << "  " << "Unable to export non path removal.";
-            return EXIT_FAILURE;
+            ret = EXIT_FAILURE;
+	    goto out;
         }
         // we know that the default action inside recurse is to recurse further or to ignore,
         // either of which is reasonably safe for deletion
         qWarning() << "WARN: deleting unknown path" << current << "; auto-recursing";
-        return recurse(key, change, path_from, matchRules, rev_from, changes, pool);
+        ret = recurse(key, change, path_from, matchRules, rev_from, changes, pool);
+	goto out;
     }
 
     // never reached
-    return EXIT_FAILURE;
+out:
+    //t1 = time(NULL); 
+    //printf("%s: %f seconds.\n", __func__, difftime(t1, t0));
+    return ret;
 }
 
 int SvnRevision::exportInternal(const char *key, const svn_fs_path_change_t *change,
@@ -701,9 +720,9 @@ int SvnRevision::exportInternal(const char *key, const svn_fs_path_change_t *cha
 
     // RMC to chatty
     //printf(".");
-    fflush(stdout);
-//                qDebug() << "   " << qPrintable(current) << "rev" << revnum << "->"
-//                         << qPrintable(repository) << qPrintable(branch) << qPrintable(path);
+    //fflush(stdout);
+    qDebug() << "   " << qPrintable(current) << "rev" << revnum << "->"
+                         << qPrintable(repository) << qPrintable(branch) << qPrintable(path);
 
     if (change->change_kind == svn_fs_path_change_delete && current == svnprefix && path.isEmpty()) {
         if(ruledebug)
