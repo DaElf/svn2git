@@ -225,7 +225,9 @@ svn_error_t *QIODevice_write(void *baton, const char *data, apr_size_t *len)
 
     while (device->bytesToWrite() > 32*1024) {
         if (!device->waitForBytesWritten(-1)) {
-            qFatal("Failed to write to process: %s", qPrintable(device->errorString()));
+            qFatal("Failed to write to process:%s:%d bytestowrite %d %s", __func__, __LINE__,
+		device->bytesToWrite(),
+		 qPrintable(device->errorString()));
             return svn_error_createf(APR_EOF, SVN_NO_ERROR, "Failed to write to process: %s",
                                      qPrintable(device->errorString()));
         }
@@ -252,7 +254,7 @@ static int dumpBlob(Repository::Transaction *txn, svn_fs_root_t *fs_root,
 
     SVN_ERR(svn_fs_file_length(&stream_length, fs_root, pathname, dumppool));
 
-    //qDebug() << "dumpBlob: " << pathname << "finalPathName " << finalPathName;
+    //qDebug() << "dumpBlob: " << pathname << "finalPathName " << finalPathName << "length " << stream_length;
 
     svn_stream_t *in_stream, *out_stream;
     if (!CommandLineParser::instance()->contains("dry-run")) {
@@ -438,9 +440,10 @@ int SvnPrivate::exportRevision(int revnum)
     if (rev.open() == EXIT_FAILURE)
         return EXIT_FAILURE;
 
-    if (rev.prepareTransactions() == EXIT_FAILURE)
+    if (rev.prepareTransactions() == EXIT_FAILURE) {
+	fprintf(stderr, "%s:%d error exit\n", __func__, __LINE__);
         return EXIT_FAILURE;
-
+    }
 
     if (!rev.needCommit) {
         printf(" nothing to do\n");
