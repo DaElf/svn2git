@@ -688,7 +688,7 @@ void FastImportRepository::finalizeTags()
         fastImport.write(message);
         fastImport.putChar('\n');
         if (!fastImport.waitForBytesWritten(-1))
-            qFatal("Failed to write to process: %s", qPrintable(fastImport.errorString()));
+            qFatal("Failed to write to process:%d %s", __LINE__, qPrintable(fastImport.errorString()));
 
         // Append note to the tip commit of the supporting ref. There is no
         // easy way to attach a note to the tag itself with fast-import.
@@ -700,7 +700,7 @@ void FastImportRepository::finalizeTags()
             delete txn;
 
             if (!fastImport.waitForBytesWritten(-1))
-                qFatal("Failed to write to process: %s", qPrintable(fastImport.errorString()));
+                qFatal("Failed to write to process:%d %s", __LINE__, qPrintable(fastImport.errorString()));
         }
 
         printf(" %s", qPrintable(tagName));
@@ -709,7 +709,7 @@ void FastImportRepository::finalizeTags()
 
     while (fastImport.bytesToWrite())
         if (!fastImport.waitForBytesWritten(-1))
-            qFatal("Failed to write to process: %s", qPrintable(fastImport.errorString()));
+            qFatal("Failed to write to process:%d %s", __LINE__, qPrintable(fastImport.errorString()));
     printf("\n");
 }
 
@@ -988,5 +988,5 @@ void FastImportRepository::Transaction::commit()
 
     while (repository->fastImport.bytesToWrite())
         if (!repository->fastImport.waitForBytesWritten(-1))
-            qFatal("Failed to write to process: %s for repository %s", qPrintable(repository->fastImport.errorString()), qPrintable(repository->name));
+            qFatal("Failed to write to process:%d %s for repository %s", __LINE__, qPrintable(repository->fastImport.errorString()), qPrintable(repository->name));
 }
