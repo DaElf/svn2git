@@ -480,7 +480,7 @@ void FastImportRepository::reloadBranches()
     if (reset_notes &&
 	CommandLineParser::instance()->contains("add-metadata-notes")) {
       fastImport.write("reset refs/notes/commits\nfrom :" +
-		       QByteArray::number(maxMark + 1) +
+		       QByteArray::number(/*maxMark+1*/ 1) +
 		       "\n");
     }
 }
