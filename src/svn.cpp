@@ -528,6 +528,7 @@ int SvnRevision::fetchRevProps()
     if( propsFetched )
         return EXIT_SUCCESS;
 
+    QByteArray author;
     apr_hash_t *revprops;
     SVN_ERR(svn_fs_revision_proplist(&revprops, fs, revnum, pool));
     svn_string_t *svnauthor = (svn_string_t*)apr_hash_get(revprops, "svn:author", APR_HASH_KEY_STRING);
@@ -537,11 +538,20 @@ int SvnRevision::fetchRevProps()
     log = svnlog ? QByteArray(svnlog->data) : QByteArray();
     authorident = svnauthor ? identities.value(svnauthor->data) : QByteArray();
     epoch = svndate ? get_epoch(svndate->data) : last_epoch;
+
+    if (svnauthor->data[svnauthor->len-1] == '\n') {
+	    author = QByteArray(svnauthor->data);
+	    qWarning() << "BADBAD svnauthor " << author;
+	    author.chop(1);
+    } else {
+	    author = QByteArray(svnauthor->data);
+    }
+
     if (authorident.isEmpty()) {
         if (!svnauthor || svn_string_isempty(svnauthor))
             authorident = "nobody <nobody@localhost>";
         else
-            authorident = svnauthor->data + QByteArray(" <") + svnauthor->data +
+            authorident = author + QByteArray(" <") + author +
                 QByteArray("@") + userdomain.toUtf8() + QByteArray(">");
     }
     propsFetched = true;
