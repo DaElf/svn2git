@@ -750,7 +750,13 @@ void FastImportRepository::startFastImport()
         fastImport.setProcessChannelMode(QProcess::MergedChannels);
 
         if (!CommandLineParser::instance()->contains("dry-run") && !CommandLineParser::instance()->contains("create-dump")) {
-            fastImport.start("git", QStringList() << "fast-import" << marksOptions);
+	    if (CommandLineParser::instance()->contains("git-fi-file")) {
+		    printf("STARTING socat\n");
+		    fastImport.start("socat", QStringList() << "-u" << "-" << "CREATE:dry-run.fi");
+	    } else {
+		    printf("STARTING git fast-import\n");
+		    fastImport.start("git", QStringList() << "fast-import" << marksOptions);
+	    }
         } else {
             fastImport.start("/bin/cat", QStringList());
         }
