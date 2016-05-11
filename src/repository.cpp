@@ -128,7 +128,7 @@ private:
 
     bool processHasStarted;
 
-    void startFastImport();
+    void startFastImport(int fi_file = 0);
     void closeFastImport();
 
     // called when a transaction is deleted
@@ -675,7 +675,8 @@ void FastImportRepository::finalizeTags()
         return;
 
     printf("Finalising tags for %s...", qPrintable(name));
-    startFastImport();
+    closeFastImport();
+    startFastImport(1);
 
     QHash<QString, AnnotatedTag>::ConstIterator it = annotatedTags.constBegin();
     for ( ; it != annotatedTags.constEnd(); ++it) {
@@ -729,10 +730,11 @@ void FastImportRepository::finalizeTags()
     printf("\n");
 }
 
-void FastImportRepository::startFastImport()
+void FastImportRepository::startFastImport(int fi_file)
 {
     processCache.touch(this);
 
+    //printf("%s state %d\n", __func__, fastImport.state());
     if (fastImport.state() == QProcess::NotRunning) {
         if (processHasStarted)
             qFatal("git-fast-import has been started once and crashed?");
@@ -753,6 +755,9 @@ void FastImportRepository::startFastImport()
 	    if (CommandLineParser::instance()->contains("git-fi-file")) {
 		    printf("STARTING socat\n");
 		    fastImport.start("socat", QStringList() << "-u" << "-" << "CREATE:dry-run.fi");
+	    } else if (fi_file) {
+		    printf("\n\nSTARTING socat for tags\n\n");
+		    fastImport.start("socat", QStringList() << "-u" << "-" << "CREATE:tags.fi");
 	    } else {
 		    printf("STARTING git fast-import\n");
 		    fastImport.start("git", QStringList() << "fast-import" << marksOptions);
