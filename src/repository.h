@@ -138,6 +138,8 @@ public:
     virtual const QByteArray branchNote(const QString& branch) const = 0;
     virtual void setBranchNote(const QString& branch, const QByteArray& noteText) = 0;
 
+    virtual QString getName() const = 0;
+    virtual Repository *getEffectiveRepository() = 0;
     virtual bool hasPrefix() const = 0;
 
     virtual QString getName() const = 0;

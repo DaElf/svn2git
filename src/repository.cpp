@@ -88,8 +88,8 @@ public:
     const QByteArray branchNote(const QString& branch) const;
     void setBranchNote(const QString& branch, const QByteArray& noteText);
 
-    bool hasPrefix() const;
 
+    bool hasPrefix() const;
     QString getName() const;
     Repository *getEffectiveRepository();
 private:
@@ -209,7 +209,6 @@ public:
 
     bool hasPrefix() const
     { return !prefix.isEmpty() || repo->hasPrefix(); }
-
     QString getName() const
     { return name; }
     Repository *getEffectiveRepository()
@@ -796,9 +795,14 @@ void FastImportRepository::setBranchNote(const QString& branch, const QByteArray
         branches[branch].note = noteText;
 }
 
-bool FastImportRepository::hasPrefix() const
+QString FastImportRepository::getName() const
 {
-    return !prefix.isEmpty();
+    return name;
+}
+
+Repository *FastImportRepository::getEffectiveRepository()
+{
+    return this;
 }
 
 QString FastImportRepository::getName() const
