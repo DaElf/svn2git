@@ -146,6 +146,34 @@ static const CommandLineOption options[] = {
     CommandLineLastOption
 };
 
+#if QT_VERSION >= 0x050000
+void errorHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+
+    if(context.line)
+	fprintf(stderr, "%s:%d ", context.function, context.line);
+#else
+void errorHandler(QtMsgType type, const char *msg)
+{
+#endif
+	
+    switch (type) {
+        case QtWarningMsg:
+            fprintf(stderr, "\033[1;33m%s\033[0m\n", qPrintable(msg));
+            break;
+        case QtCriticalMsg:
+            fprintf(stderr, "\033[31m%s\033[0ms\n", qPrintable(msg));
+            break;
+        case QtFatalMsg:
+            fprintf(stderr, "\033[31m%s\033[0m\n", qPrintable(msg));
+            abort();
+        case QtDebugMsg:
+        default:
+            fprintf(stderr, "%s\n", qPrintable(msg));
+            break;
+    }
+}
+
 int main(int argc, char **argv)
 {
     printf("Invoked as:'");
@@ -185,6 +213,12 @@ int main(int argc, char **argv)
         QTextStream out(stderr);
         out << "WARNING; no identity-map or -domain specified, all commits will use default @localhost email address\n\n";
     }
+
+#if QT_VERSION >= 0x050000
+    qInstallMessageHandler(errorHandler);
+#else
+    qInstallMsgHandler(errorHandler);
+#endif
 
     QCoreApplication app(argc, argv);
     // Load the configuration

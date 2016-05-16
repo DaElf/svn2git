@@ -467,7 +467,7 @@ int SvnPrivate::exportRevision(int revnum)
 
     strftime(s, 64, "%r", p);
     // open this revision:
-    printf("[%s] Exporting revision %d\t", s, revnum);
+    printf("\033[36m[%s] Exporting revision %d\033[0m\n", s, revnum);
     fflush(stdout);
 
     if (rev.open() == EXIT_FAILURE)
@@ -740,8 +740,7 @@ int SvnRevision::exportInternal(const char *key, const svn_fs_path_change2_t *ch
     // RMC to chatty
     //printf(".");
     //fflush(stdout);
-    qDebug() << "   " << qPrintable(current) << "rev" << revnum << "->"
-                         << qPrintable(repository) << qPrintable(branch) << qPrintable(path);
+    printf("%-40s %6d %-15s %-10s %-20s\n", qPrintable(current), revnum, qPrintable(repository), qPrintable(branch), qPrintable(path));
 
     if (change->change_kind == svn_fs_path_change_delete && current == svnprefix && path.isEmpty()) {
         if(ruledebug)
