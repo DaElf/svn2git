@@ -798,6 +798,11 @@ void FastImportRepository::setBranchNote(const QString& branch, const QByteArray
         branches[branch].note = noteText;
 }
 
+bool FastImportRepository::hasPrefix() const
+{
+    return !prefix.isEmpty();
+}
+
 QString FastImportRepository::getName() const
 {
     return name;
