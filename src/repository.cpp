@@ -116,6 +116,10 @@ private:
     QByteArray deletedBranches;
     QByteArray resetBranches;
 
+  /* Optional filter to fix up log messages */
+    QProcess filterMsg;
+  QByteArray msgFilter(QByteArray);
+
     /* starts at 0, and counts up.  */
     mark_t last_commit_mark;
 
@@ -714,6 +718,29 @@ void FastImportRepository::finalizeTags()
     printf("\n");
 }
 
+
+QByteArray
+FastImportRepository::msgFilter(QByteArray msg)
+{
+    QByteArray output = msg;
+
+    if (CommandLineParser::instance()->contains("msg-filter")) {
+	if (filterMsg.state() == QProcess::Running)
+	    qFatal("filter process already running?");
+
+	filterMsg.start(CommandLineParser::instance()->optionArgument("msg-filter"));
+
+	if(!(filterMsg.waitForStarted(-1)))
+	    qFatal("Failed to Start Filter %d %s", __LINE__, qPrintable(filterMsg.errorString()));
+
+	filterMsg.write(msg);
+	filterMsg.closeWriteChannel();
+	filterMsg.waitForFinished();
+	output = filterMsg.readAllStandardOutput();
+    }
+    return output;
+}
+
 void FastImportRepository::startFastImport(int fi_file)
 {
     processCache.touch(this);
@@ -911,7 +938,8 @@ void FastImportRepository::Transaction::commit()
     Q_ASSERT(mark < repository->next_file_mark - 1);
 
     // create the commit message
-    QByteArray message = log;
+    //    QByteArray message = log;
+    QByteArray message = repository->msgFilter(log);
     if (!message.endsWith('\n'))
         message += '\n';
     if (CommandLineParser::instance()->contains("add-metadata"))
