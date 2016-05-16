@@ -673,9 +673,12 @@ void FastImportRepository::finalizeTags()
     if (annotatedTags.isEmpty())
         return;
 
-    printf("Finalising tags for %s...", qPrintable(name));
+    printf("\033[36mFinalising tags for %s...\033[0m", qPrintable(name));
+#if 0
     closeFastImport();
     startFastImport(1);
+#endif
+    startFastImport();
 
     QHash<QString, AnnotatedTag>::ConstIterator it = annotatedTags.constBegin();
     for ( ; it != annotatedTags.constEnd(); ++it) {
