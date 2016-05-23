@@ -20,9 +20,11 @@
 #include "CommandLineParser.h"
 #include <QTextStream>
 #include <QDebug>
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QLinkedList>
+#include <QTimeZone>
 
 static const int maxSimultaneousProcesses = 100;
 
@@ -92,6 +94,8 @@ public:
     bool hasPrefix() const;
     QString getName() const;
     Repository *getEffectiveRepository();
+    QString authorZone(uint datetime);
+    QString authorZone(uint datetime, const QByteArray &anaId);
 private:
     struct Branch
     {
@@ -699,7 +703,7 @@ void FastImportRepository::finalizeTags()
             QByteArray s = "progress Creating annotated tag " + tagName.toUtf8() + " from ref " + branchRef + "\n"
               + "tag " + tagName.toUtf8() + "\n"
               + "from " + branchRef + "\n"
-              + "tagger " + tag.author + ' ' + QByteArray::number(tag.dt) + " +0000" + "\n"
+              + "tagger " + tag.author + ' ' + QByteArray::number(tag.dt) +  " " + this->authorZone(tag.dt).toUtf8() + "\n"
               + "data " + QByteArray::number( message.length() ) + "\n";
             fastImport.write(s);
         }
@@ -928,7 +932,7 @@ void FastImportRepository::Transaction::commitNote(const QByteArray &noteText, b
     QByteArray s("");
     s.append("commit refs/notes/commits\n");
     s.append("mark :" + QByteArray::number(maxMark + 1) + "\n");
-    s.append("committer " + author + " " + QString::number(datetime) + " +0000" + "\n");
+    s.append("committer " + author + " " + QString::number(datetime) + " " + repository->authorZone(datetime) + "\n");
     s.append("data " + QString::number(message.length()) + "\n");
     s.append(message + "\n");
     s.append("N inline " + commitRef + "\n");
@@ -939,6 +943,31 @@ void FastImportRepository::Transaction::commitNote(const QByteArray &noteText, b
     if (commit.isNull()) {
         repository->setBranchNote(QString::fromUtf8(branch), text);
     }
+}
+
+QString FastImportRepository::authorZone(uint datetime)
+{
+	QTimeZone tozone;
+	return authorZone(datetime, tozone.systemTimeZoneId());
+}
+
+QString FastImportRepository::authorZone(uint datetime, const QByteArray &zoneId)
+{
+	QString timezone("+0000");
+	if (CommandLineParser::instance()->contains("use-localtime-offset")) {
+
+		QTimeZone tozone(zoneId);
+		QDateTime dtime;
+		dtime.setTimeZone(tozone);
+		dtime.setTime_t(datetime);
+		int hour =  dtime.offsetFromUtc() / 3600;
+		int min =  (abs(dtime.offsetFromUtc()) - (abs(hour) * 3600)) / 60;
+
+		timezone.sprintf("%s%02u%02d",((hour >= 0)?"+":"-"),abs(hour),abs(min));
+		//qDebug() << "timezone string" << qPrintable(timezone) << "Is DayLight Saving? " << dtime.isDaylightTime();
+	}
+
+	return timezone;
 }
 
 void FastImportRepository::Transaction::commit()
@@ -979,7 +1008,7 @@ void FastImportRepository::Transaction::commit()
     QByteArray s("");
     s.append("commit " + branchRef + "\n");
     s.append("mark :" + QByteArray::number(mark) + "\n");
-    s.append("committer " + author + " " + QString::number(datetime).toUtf8() + " +0000" + "\n");
+    s.append("committer " + author + " " + QString::number(datetime).toUtf8() + " " + repository->authorZone(datetime) + "\n");
     s.append("data " + QString::number(message.length()) + "\n");
     s.append(message + "\n");
     repository->fastImport.write(s);
