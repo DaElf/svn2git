@@ -64,6 +64,14 @@ QHash<QByteArray, QByteArray> loadIdentityMapFile(const QString &fileName)
           rightspace += 2;
         }
 
+	int tzspace = line.indexOf(":");
+	if (tzspace > 0) {
+		qDebug() << "tzspace " << tzspace  << "key " << line.trimmed()
+			 << line.mid(rightspace, tzspace - rightspace).trimmed()
+			 << "Zone Info" << line.mid(tzspace+1).trimmed();
+	} else {
+		qDebug() << "tzspace " << tzspace  << line.mid(rightspace);
+	}
         QByteArray realname = line.mid(rightspace).trimmed();
         line.truncate(leftspace);
 
