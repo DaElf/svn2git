@@ -1001,11 +1001,13 @@ void FastImportRepository::Transaction::commit()
 
     // create the commit message
     QByteArray message = log;
-    // QByteArray message = repository->msgFilter(log);
     if (!message.endsWith('\n'))
         message += '\n';
     if (CommandLineParser::instance()->contains("add-metadata"))
         message += "\n" + Repository::formatMetadataMessage(svnprefix, revnum);
+
+    // Call external message filter if provided
+    message = repository->msgFilter(message);
 
     mark_t parentmark = 0;
     Branch &br = repository->branches[branch];
@@ -1028,7 +1030,7 @@ void FastImportRepository::Transaction::commit()
     s.append("mark :" + QByteArray::number(mark) + "\n");
     s.append("committer " + author + " " + QString::number(datetime).toUtf8() + " " + repository->authorZone(datetime) + "\n");
     s.append("data " + QString::number(message.length()) + "\n");
-    s.append(repository->msgFilter(message) + "\n");
+    s.append(message + "\n");
     repository->fastImport.write(s);
 
     // note some of the inferred merges
