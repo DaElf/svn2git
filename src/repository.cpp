@@ -126,7 +126,7 @@ private:
 
   /* Optional filter to fix up log messages */
     QProcess filterMsg;
-  QByteArray msgFilter(QByteArray);
+    QByteArray msgFilter(QByteArray);
 
     /* starts at 0, and counts up.  */
     mark_t last_commit_mark;
@@ -1010,8 +1010,8 @@ void FastImportRepository::Transaction::commit()
     Q_ASSERT(mark < repository->next_file_mark - 1);
 
     // create the commit message
-    //    QByteArray message = log;
-    QByteArray message = repository->msgFilter(log);
+    QByteArray message = log;
+    // QByteArray message = repository->msgFilter(log);
     if (!message.endsWith('\n'))
         message += '\n';
     if (CommandLineParser::instance()->contains("add-metadata"))
@@ -1038,7 +1038,7 @@ void FastImportRepository::Transaction::commit()
     s.append("mark :" + QByteArray::number(mark) + "\n");
     s.append("committer " + author + " " + QString::number(datetime).toUtf8() + " " + repository->authorZone(datetime) + "\n");
     s.append("data " + QString::number(message.length()) + "\n");
-    s.append(message + "\n");
+    s.append(repository->msgFilter(message) + "\n");
     repository->fastImport.write(s);
 
     // note some of the inferred merges
