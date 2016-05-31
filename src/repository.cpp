@@ -844,16 +844,6 @@ Repository *FastImportRepository::getEffectiveRepository()
     return this;
 }
 
-QString FastImportRepository::getName() const
-{
-    return name;
-}
-
-Repository *FastImportRepository::getEffectiveRepository()
-{
-    return this;
-}
-
 FastImportRepository::Transaction::~Transaction()
 {
     repository->forgetTransaction(this);
